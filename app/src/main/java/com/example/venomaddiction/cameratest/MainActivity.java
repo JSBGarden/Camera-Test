@@ -327,8 +327,8 @@ public class MainActivity extends AppCompatActivity
             // TODO: do something with the feed
             TextView result=(TextView) findViewById(R.id.textresult);
             result.setText(feed);
-            //i.putExtra("result",feed);
-            //startActivity(i);
+            i.putExtra("result",feed);
+            startActivity(i);
             
         }
 
