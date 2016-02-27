@@ -16,5 +16,4 @@
         android:text="similar"
         android:id="@+id/my_similar_row"
         />
-
 </LinearLayout>

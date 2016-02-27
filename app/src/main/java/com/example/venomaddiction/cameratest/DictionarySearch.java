@@ -41,7 +41,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class DictionarySearch extends AppCompatActivity {
     public String search_word;
-    Button Search;
+    Button Search,random;
     public static EditText word;
     public TextView meanings;
     public ListView lstVMeaning;
@@ -59,6 +59,9 @@ public class DictionarySearch extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dictionary_search);
         Search=(Button) findViewById(R.id.btnDictionarySearch);
+        random=(Button) findViewById(R.id.random);
+
+
         word=(EditText) findViewById(R.id.etDictionarySearch);
 
 
@@ -83,6 +86,15 @@ public class DictionarySearch extends AppCompatActivity {
                 //imageFromGallery();
                 perferm_search();
 
+
+
+            }
+        });
+        random.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MyRandomThread randThread= new MyRandomThread();
+                randThread.execute();
 
 
             }
@@ -196,13 +208,13 @@ public class DictionarySearch extends AppCompatActivity {
 
                     meaningList.setMeaning(meaning);
                     meaningList.setWord_type(wtype);
-                    /*if (!similar.equals("None"))
-                        meaningList.setSimilar(person.getString("similar"));
-                    if (!antonym.equals("None"))
+                    //if (!similar.equals("None"))
+                    meaningList.setSimilar(person.getString("similar"));
+                    //if (!antonym.equals("None"))
                     meaningList.setAntonym(person.getString("antonym"));
-                    if (!see_also.equals("None"))
-                    meaningList.setSee_also(person.getString("see_also"));
-                    */
+                    //if (!see_also.equals("None"))
+                    meaningList.setSee_also(person.getString("seealso"));
+
                     all_list.add(meaningList);
 
                 }
@@ -324,10 +336,20 @@ public class DictionarySearch extends AppCompatActivity {
             View my_view=my_new_inf.inflate(R.layout.my_meaning_adpter_view, parent, false);
             TextView my_meaning_row = (TextView) my_view.findViewById(R.id.my_meaning_row);
             TextView my_similar_row = (TextView) my_view.findViewById(R.id.my_similar_row);
+            //TextView my_antonym_row = (TextView) my_view.findViewById(R.id.my_antonym_row);
 
             MeaningList cur_class =  cur_all_list.get(position);
-            my_meaning_row.setText(cur_class.getMeaning());
-            my_similar_row.setText(cur_class.getWord_type());
+            String meaning_type_combo="("+cur_class.getWord_type()+") "+cur_class.getMeaning();
+            String other_combo="";
+            if (!cur_class.getSimilar().equals("None"))
+                other_combo=other_combo+"{Similar:"+cur_class.getSimilar()+"}";
+            if (!cur_class.getAntonym().equals("None"))
+                other_combo=other_combo+"{Antonym:"+cur_class.getAntonym()+"}";
+            if (!cur_class.getSee_also().equals("None"))
+                other_combo=other_combo+"{See also:"+cur_class.getSee_also()+"}";
+           // my_meaning_row.setText(cur_class.getMeaning());
+            my_meaning_row.setText(meaning_type_combo);
+            my_similar_row.setText(other_combo);
             //my_layout.addView(my_view);
             return my_view;
         }
@@ -349,5 +371,102 @@ public class DictionarySearch extends AppCompatActivity {
 
     }
 
+
+
+
+
+
+
+    public class MyRandomThread extends AsyncTask<Void, Void, String>{
+
+        @Override
+        protected String doInBackground(Void... params) {
+            String word="";
+
+            HashMap<String, String > post_data_params= new HashMap<String,String>();
+            post_data_params.put("word","dummy");
+            String url="http://"+Constants.IP+":8080/random";
+            word=performPostCall(url,post_data_params);
+
+
+            return word;
+
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            word.setText(s);
+            perferm_search();
+        }
+
+        ///////////////////////////
+        public String  performPostCall(String requestURL,
+                                       HashMap<String, String> postDataParams) {
+
+
+            URL url;
+            String response = "";
+            try {
+                url = new URL(requestURL);
+
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setReadTimeout(15000);
+                conn.setConnectTimeout(15000);
+                conn.setRequestMethod("POST");
+                conn.setDoInput(true);
+                conn.setDoOutput(true);
+
+
+                OutputStream os = conn.getOutputStream();
+                BufferedWriter writer = new BufferedWriter(
+                        new OutputStreamWriter(os, "UTF-8"));
+                writer.write(getPostDataString(postDataParams));
+
+                writer.flush();
+                writer.close();
+                os.close();
+                int responseCode=conn.getResponseCode();
+
+                if (responseCode == HttpsURLConnection.HTTP_OK) {
+                    String line;
+                    BufferedReader br=new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    while ((line=br.readLine()) != null) {
+                        response+=line;
+                    }
+                }
+                else {
+                    response="";
+
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return response;
+        }
+
+        //////////////
+        private String getPostDataString(HashMap<String, String> params) throws UnsupportedEncodingException {
+            StringBuilder result = new StringBuilder();
+            boolean first = true;
+            for(Map.Entry<String, String> entry : params.entrySet()){
+                if (first)
+                    first = false;
+                else
+                    result.append("&");
+
+                result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+                result.append("=");
+                result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+            }
+
+            return result.toString();
+        }
+
+
+
+
+
+
+    }
 
 }
